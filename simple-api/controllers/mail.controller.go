@@ -13,7 +13,7 @@ type MailController struct {
 	MailService services.MailService
 }
 
-func New(mailService services.MailService) MailController {
+func NewMail(mailService services.MailService) MailController {
 	return MailController{
 		MailService: mailService,
 	}
@@ -81,7 +81,7 @@ func (mc *MailController) DeleteMail(ctx *gin.Context) {
 }
 
 func (mc *MailController) MailRoutes(rg *gin.RouterGroup) {
-	route := rg.Group("/mail")
+	route := rg.Group("/mails")
 	route.POST("", mc.CreateMail)
 	route.GET("", mc.GetAll)
 	route.GET("/:id", mc.GetMail)
