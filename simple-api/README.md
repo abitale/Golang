@@ -2,11 +2,9 @@
 CRUD API with MongoDB and Gin Web Framework
 ## Requirements:
     1) Installed Latest GO / LTS on your computer
-        You can check your GO version by running this in terminal:
-    ###     `go version`
+        You can check your GO version by running this in terminal: `go version`
     2) MongoDB running on your computer
-        You can check if you have MongoDB running with this command:
-    ###     `mongo`
+        You can check if you have MongoDB running with this command: `mongo`
 
 You can run the program with this command in your terminal (make sure you are in the right directory where the `main.go` located):
 ### `go run main.go`
