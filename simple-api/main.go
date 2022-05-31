@@ -6,8 +6,10 @@ import (
 	"log"
 	"net/http"
 
+	"example.com/simple-api/auth"
 	"example.com/simple-api/controllers"
 	"example.com/simple-api/services"
+	"github.com/gin-gonic/gin"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -50,6 +52,24 @@ func init() {
 	userCollection = mongoClient.Database("maildb").Collection("users")
 	userService = services.NewUserService(userCollection, ctx)
 	userController = controllers.NewUser(userService)
+}
+
+func AuthRequired() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		token := c.GetHeader("Authorization")
+		if token == "" {
+			c.JSON(401, gin.H{"error": "access denied, not authorized"})
+			c.Abort()
+			return
+		}
+		err := auth.ValidateToken(token)
+		if err != nil {
+			c.JSON(401, gin.H{"error": err.Error()})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
 }
 
 func main() {
