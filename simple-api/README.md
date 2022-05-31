@@ -9,6 +9,8 @@ CRUD API with MongoDB and Gin Web Framework
 You can run the program with this command in your terminal (make sure you are in the right directory where the `main.go` located):
 ### `go run main.go`
 
+*Note: Don't forget to configure the main.go mongo port to match your mongodb port
+
 ## How To:
 The API runs on port 8080, so it will be http://localhost:8080/
 
