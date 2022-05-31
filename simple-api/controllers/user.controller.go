@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"example.com/simple-api/auth"
 	"example.com/simple-api/models"
 	"example.com/simple-api/services"
 )
@@ -45,11 +44,6 @@ func (uc *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	tokenString, err := auth.GenerateJWT(user.Email)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Write([]byte("token: " + tokenString))
+	w.Write([]byte("success"))
 	w.WriteHeader(201)
 }
