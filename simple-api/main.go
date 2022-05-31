@@ -4,24 +4,26 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 
 	"example.com/simple-api/auth"
 	"example.com/simple-api/controllers"
 	"example.com/simple-api/services"
 	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 var (
-	server         *gin.Engine
 	mailCollection *mongo.Collection
 	mailService    services.MailService
 	mailController controllers.MailController
 	userCollection *mongo.Collection
 	userService    services.UserService
-	UserController controllers.UserController
+	userController controllers.UserController
 	ctx            context.Context
 	mongoClient    *mongo.Client
 	err            error
@@ -49,11 +51,7 @@ func init() {
 
 	userCollection = mongoClient.Database("maildb").Collection("users")
 	userService = services.NewUserService(userCollection, ctx)
-	UserController = controllers.NewUser(userService)
-
-	server = gin.New()
-	server.Use(gin.Logger())
-	server.Use(gin.Recovery())
+	userController = controllers.NewUser(userService)
 }
 
 func AuthRequired() gin.HandlerFunc {
@@ -77,9 +75,19 @@ func AuthRequired() gin.HandlerFunc {
 func main() {
 	defer mongoClient.Disconnect(ctx)
 
-	basepath := server.Group("/v1", AuthRequired())
-	mailController.MailRoutes(basepath)
-	UserController.UserRoutes(server.Group("/auth"))
-
-	log.Fatal(server.Run(":8080"))
+	server := chi.NewRouter()
+	server.Use(middleware.Logger)
+	server.Use(middleware.Recoverer)
+	server.Route("/users", func(r chi.Router) {
+		r.Post("/register", userController.CreateUser)
+		r.Post("/login", userController.LoginUser)
+	})
+	server.Route("/mails", func(r chi.Router) {
+		r.Post("/", mailController.CreateMail)
+		r.Get("/", mailController.GetAll)
+		r.Get("/{id}", mailController.GetMail)
+		r.Put("/{id}", mailController.UpdateMail)
+		r.Delete("/{id}", mailController.DeleteMail)
+	})
+	http.ListenAndServe(":8080", server)
 }

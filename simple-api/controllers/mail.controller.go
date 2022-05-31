@@ -1,12 +1,13 @@
 package controllers
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
 	"example.com/simple-api/models"
 	"example.com/simple-api/services"
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 )
 
 type MailController struct {
@@ -19,72 +20,68 @@ func NewMail(mailService services.MailService) MailController {
 	}
 }
 
-func (mc *MailController) CreateMail(ctx *gin.Context) {
+func (mc *MailController) CreateMail(w http.ResponseWriter, r *http.Request) {
 	var mail models.Mail
-	if err := ctx.ShouldBindJSON(&mail); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+	if err := json.NewDecoder(r.Body).Decode(&mail); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	err := mc.MailService.CreateMail(&mail)
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"message": "success"})
+	w.Write([]byte("success"))
+	w.WriteHeader(201)
 }
 
-func (mc *MailController) GetMail(ctx *gin.Context) {
-	id := ctx.Param("id")
+func (mc *MailController) GetMail(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
 	idc, _ := strconv.Atoi(id)
 	mail, err := mc.MailService.GetMail(&idc)
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
 	}
-	ctx.JSON(http.StatusOK, mail)
+	json.NewEncoder(w).Encode(mail)
+	w.WriteHeader(201)
 }
 
-func (mc *MailController) GetAll(ctx *gin.Context) {
+func (mc *MailController) GetAll(w http.ResponseWriter, r *http.Request) {
 	mails, err := mc.MailService.GetAll()
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
 	}
-	ctx.JSON(http.StatusOK, mails)
+	json.NewEncoder(w).Encode(mails)
+	w.WriteHeader(201)
 }
 
-func (mc *MailController) UpdateMail(ctx *gin.Context) {
+func (mc *MailController) UpdateMail(w http.ResponseWriter, r *http.Request) {
 	var mail models.Mail
-	id := ctx.Param("id")
+	id := chi.URLParam(r, "id")
 	idc, _ := strconv.Atoi(id)
-	if err := ctx.ShouldBindJSON(&mail); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+	if err := json.NewDecoder(r.Body).Decode(&mail); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	err := mc.MailService.UpdateMail(&idc, &mail)
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"message": "success"})
+	w.Write([]byte("success"))
+	w.WriteHeader(201)
 }
 
-func (mc *MailController) DeleteMail(ctx *gin.Context) {
-	id := ctx.Param("id")
+func (mc *MailController) DeleteMail(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
 	idc, _ := strconv.Atoi(id)
 	err := mc.MailService.DeleteMail(&idc)
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"message": "success"})
-}
-
-func (mc *MailController) MailRoutes(rg *gin.RouterGroup) {
-	route := rg.Group("/mails")
-	route.POST("", mc.CreateMail)
-	route.GET("", mc.GetAll)
-	route.GET("/:id", mc.GetMail)
-	route.DELETE("/:id", mc.DeleteMail)
-	route.PUT("/:id", mc.UpdateMail)
+	w.Write([]byte("success"))
+	w.WriteHeader(201)
 }

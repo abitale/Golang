@@ -1,12 +1,12 @@
 package controllers
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"example.com/simple-api/auth"
 	"example.com/simple-api/models"
 	"example.com/simple-api/services"
-	"github.com/gin-gonic/gin"
 )
 
 type UserController struct {
@@ -19,42 +19,37 @@ func NewUser(userService services.UserService) UserController {
 	}
 }
 
-func (uc *UserController) CreateUser(ctx *gin.Context) {
+func (uc *UserController) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var user models.RegisterUser
-	if err := ctx.ShouldBindJSON(&user); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	err := uc.UserService.CreateUser(&user)
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"message": "success"})
+	w.Write([]byte("success"))
+	w.WriteHeader(201)
 }
 
-func (uc *UserController) LoginUser(ctx *gin.Context) {
+func (uc *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
 	var user models.LoginUser
-	if err := ctx.ShouldBindJSON(&user); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	err := uc.UserService.LoginUser(&user)
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	tokenString, err := auth.GenerateJWT(user.Email)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		ctx.Abort()
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"token": tokenString})
-}
-
-func (uc *UserController) UserRoutes(rg *gin.RouterGroup) {
-	route := rg.Group("/users")
-	route.POST("/register", uc.CreateUser)
-	route.POST("/login", uc.LoginUser)
+	w.Write([]byte("token: " + tokenString))
+	w.WriteHeader(201)
 }
