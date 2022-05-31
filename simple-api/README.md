@@ -13,14 +13,14 @@ You can run the program with this command in your terminal (make sure you are in
 The API runs on port 8080, so it will be http://localhost:8080/
 
 Here is the available routes:
-1) http://localhost:8080/v1/mails/ (Need Authorization on Header)
+1) http://localhost:8080/mails/
     - POST = Create New Mail
     - GET = Get All Mail
-2) http://localhost:8080/v1/mails/{id} (Need Authorization on Header)
+2) http://localhost:8080/mails/{id}
     - PUT = Update Mail by ID
     - GET = Get Mail by ID
     - DELETE = Delete Mail by ID
-3) http://localhost:8080/auth/users/register
+3) http://localhost:8080/users/register
     - POST = Create New User
-4) http://localhost:8080/auth/users/login
+4) http://localhost:8080/users/login
     - POST = Login User to get Token
