@@ -6,10 +6,13 @@ import (
 	"log"
 	"net/http"
 
+	"example.com/simple-api/auth"
 	"example.com/simple-api/controllers"
 	"example.com/simple-api/services"
+	"github.com/gin-gonic/gin"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/jwtauth/v5"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -22,6 +25,7 @@ var (
 	userCollection *mongo.Collection
 	userService    services.UserService
 	userController controllers.UserController
+	tokenAuth      *jwtauth.JWTAuth
 	ctx            context.Context
 	mongoClient    *mongo.Client
 	err            error
@@ -52,6 +56,36 @@ func init() {
 	userController = controllers.NewUser(userService)
 }
 
+func AuthRequired() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		token := c.GetHeader("Authorization")
+		if token == "" {
+			c.JSON(401, gin.H{"error": "access denied, not authorized"})
+			c.Abort()
+			return
+		}
+		err := auth.ValidateToken(token)
+		if err != nil {
+			c.JSON(401, gin.H{"error": err.Error()})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
+}
+
+func Authen(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token := r.Header.Get("Authorization")
+
+		if auth.ValidateToken(token) != nil {
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	defer mongoClient.Disconnect(ctx)
 
@@ -63,6 +97,8 @@ func main() {
 		r.Post("/login", userController.LoginUser)
 	})
 	server.Route("/mails", func(r chi.Router) {
+		r.Use(jwtauth.Verifier(tokenAuth))
+		r.Use(Authen)
 		r.Post("/", mailController.CreateMail)
 		r.Get("/", mailController.GetAll)
 		r.Get("/{id}", mailController.GetMail)
