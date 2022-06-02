@@ -3,6 +3,7 @@ package main
 import (
 	"io/ioutil"
 	"log"
+	"os/exec"
 	"strings"
 )
 
@@ -18,5 +19,14 @@ func main() {
 	err = ioutil.WriteFile("./CustomerAuthorizationMaintenanceChanged.html", []byte(replaceHtml), 0666)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	execString := []string{"./CustomerAuthorizationMaintenanceChanged.html", "./CustomerAuthorizationMaintenanceChanged.pdf"}
+	execCmd := exec.Command("C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf", execString...)
+
+	execOut, err := execCmd.CombinedOutput()
+
+	if err != nil {
+		log.Fatal("Error: ", err, execOut)
 	}
 }
