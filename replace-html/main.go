@@ -27,7 +27,7 @@ func main() {
 	)
 
 	replaceHtml := replaceString.Replace(string(templ))
-	err = ioutil.WriteFile("./"+fileName+"changed.html", []byte(replaceHtml), 0666)
+	err = ioutil.WriteFile("./"+fileName+"Changed.html", []byte(replaceHtml), 0666)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -52,6 +52,7 @@ func main() {
 	generate.Grayscale.Set(false)
 
 	page := wkhtmltopdf.NewPageReader(strings.NewReader(replaceHtml))
+	//page := wkhtmltopdf.NewPageReader(bytes.NewReader([]byte(replaceHtml)))
 
 	page.Zoom.Set(0.95)
 
