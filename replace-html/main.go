@@ -62,7 +62,7 @@ func main() {
 		log.Fatal(errCreate)
 	}
 
-	errWrite := generate.WriteFile("./" + fileName + "changed.pdf")
+	errWrite := generate.WriteFile("./" + fileName + ".pdf")
 	if errWrite != nil {
 		log.Fatal(errWrite)
 	}
