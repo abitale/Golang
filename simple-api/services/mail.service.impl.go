@@ -22,6 +22,11 @@ func NewMailService(mailCollection *mongo.Collection, ctx context.Context) MailS
 }
 
 func (m *MailServiceImpl) CreateMail(mail *models.Mail) error {
+	query := bson.D{bson.E{Key: "id", Value: mail.ID}}
+	checkIfExist := m.mailCollection.FindOne(m.ctx, query)
+	if checkIfExist.Err() == nil {
+		return errors.New("document already exist")
+	}
 	_, err := m.mailCollection.InsertOne(m.ctx, mail)
 	return err
 }
@@ -64,6 +69,9 @@ func (m *MailServiceImpl) GetAll() ([]*models.Mail, error) {
 }
 
 func (m *MailServiceImpl) UpdateMail(id *int, mail *models.Mail) error {
+	if *id != mail.ID {
+		return errors.New("ID not match")
+	}
 	filter := bson.D{bson.E{Key: "id", Value: id}}
 	update := bson.D{bson.E{Key: "$set", Value: bson.D{bson.E{Key: "sender", Value: mail.Sender}, bson.E{Key: "receiver", Value: mail.Receiver}, bson.E{Key: "body", Value: mail.Body}}}}
 	result, _ := m.mailCollection.UpdateOne(m.ctx, filter, update)
